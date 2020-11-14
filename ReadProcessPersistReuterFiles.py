@@ -2,8 +2,6 @@ import re
 import json
 import sys
 from pymongo import MongoClient
-from pyspark import SparkContext
-from operator import add
 
 regular_expression = re.compile(
     r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}|https?://(?:[-w.]|(?:%[\da-fA-F]{2}))+|[!@#$]|//?|<.*?>|\\?')
@@ -12,7 +10,6 @@ client = MongoClient(
     'mongodb+srv://user:5408pass3@data-assignment3.xtllw.mongodb.net/RawDb?retryWrites=true&w=majority')
 count_keyword_list = ["Storm", "Winter", "Canada", "hot",
                       "cold", "Flu", "Snow", "Indoor",	"Safety", "rain", "ice"]
-
 
 try:
     reuter_data_list = []
@@ -29,18 +26,21 @@ try:
                 title_list = re.findall(r'<TITLE>(.+?)</TITLE>', reuter)
                 if len(title_list) > 0:
                     title_text = title_list[0]
+                    title_text = regular_expression.sub(r'', title_text)
                 else:
                     title_text = ''
 
                 body_list = re.findall(r'<BODY>(.+?)</BODY>', reuter)
                 if len(body_list) > 0:
                     body_text = body_list[0]
+                    body_text = regular_expression.sub(r'', body_text)
                 else:
                     body_text = ''
 
                 date_list = re.findall(r'<DATELINE>(.+?)</DATELINE>', reuter)
                 if len(date_list) > 0:
                     date_text = date_list[0]
+                    date_text = regular_expression.sub(r'', date_text)
                 else:
                     date_text = ''
 
@@ -52,6 +52,7 @@ try:
                         r'<D>(.+?)</D>', place_list_with_d_tag)
                     for place in places_arr:
                         place = ' ' + place + ' '
+                        place = regular_expression.sub(r'', place)
                         new_places_arr.append(place)
                 else:
                     place_list_with_d_tag = ''

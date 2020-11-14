@@ -4,7 +4,6 @@ import re
 from bson import json_util
 import sys
 from pymongo.errors import BulkWriteError
-import datetime
 from json import JSONDecodeError
 
 search_keyword_list = ["Storm", "Winter", "Canada",
@@ -90,10 +89,10 @@ try:
                         processed_record_json[key] = ''
 
             record_str = json.dumps(processed_record_json)
-            record_str_1 = record_str.replace('\'', '\"')
-            record_str_1 = record_str_1.replace('\n', ' ')
+            record_str = record_str.replace('\n', ' ')
             processed_data_str = regular_expression.sub(
-                r'', record_str_1)
+                r'', record_str)
+            processed_data_str = processed_data_str.replace('\'', '\"')
             processed_data = json.loads(processed_data_str)
             processed_data_list.append(processed_data)
 
@@ -115,13 +114,10 @@ try:
             processed_records = processed_database[keyword]
 
             processed_records.delete_many({})
-            insert_list = processed_data_dict[keyword][0:600]
+            insert_list = processed_data_dict[keyword]
             processed_records.insert_many(insert_list)
 
             print('tweet processed db done.', keyword)
-            now = datetime.datetime.now()
-            print("Current date and time : ")
-            print(now.strftime("%Y-%m-%d %H:%M:%S"))
 
 except BulkWriteError as e:
     print('BulkWriteError', e)

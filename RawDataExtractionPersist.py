@@ -3,8 +3,6 @@ import json
 import time
 from pymongo import MongoClient
 import sys
-from pyspark import SparkContext
-import datetime
 
 
 api_key = 'GS7fF6DxxffpqpuzTm3o1nOEE'
@@ -28,7 +26,7 @@ rawdb_database = client.get_database('RawDb')
 
 
 class StreamAPI(tweepy.StreamListener):
-    def __init__(self, time_limit=2):
+    def __init__(self, time_limit=24):
         self.start_time = time.time()
         self.limit = time_limit
         super(StreamAPI, self).__init__()
@@ -45,18 +43,12 @@ class StreamAPI(tweepy.StreamListener):
 
 
 try:
-    now = datetime.datetime.now()
-    print("Current date and time : ")
-    print(now.strftime("%Y-%m-%d %H:%M:%S"))
     for keyword in search_keyword_list:
         keyword_list = []
-        for tweet in tweepy.Cursor(connection.search, q=keyword, lang='en').items(3):
+        for tweet in tweepy.Cursor(connection.search, q=keyword, lang='en').items(250):
             tweet_dict = tweet._json
             if(tweet_dict['text'] and tweet_dict['user']['location'] and tweet_dict['user']['created_at']):
                 keyword_list.append(tweet_dict)
-
-        print('keyword: ', keyword)
-        print('count from search: ', len(keyword_list))
 
         stream_listener = StreamAPI()
         stream = tweepy.Stream(auth=connection.auth, listener=stream_listener)
@@ -64,9 +56,6 @@ try:
 
         print('after streaming length: ', len(keyword_list))
         final_dict[keyword] = keyword_list
-        now = datetime.datetime.now()
-        print("Current date and time : ")
-        print(now.strftime("%Y-%m-%d %H:%M:%S"))
 
 except:
     print("Retrieving tweet error: ", sys.exc_info()[0])
@@ -80,8 +69,5 @@ try:
             insert_list = final_dict[keyword][0:600]
             rawdb_records.insert_many(insert_list)
             print('tweet raw db done.', keyword)
-            now = datetime.datetime.now()
-            print("Current date and time : ")
-            print(now.strftime("%Y-%m-%d %H:%M:%S"))
 except:
     print("Inserting into rawDB error: ", sys.exc_info()[0])
